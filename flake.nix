@@ -13,14 +13,19 @@
           cmake
           ninja
           pkg-config
+          glslang
           clang-tools   # clangd, clang-format
           gdb
         ];
         buildInputs = with pkgs; [
           sdl3
+          glm
         ];
 
-        CMAKE_PREFIX_PATH  = "${pkgs.sdl3.dev}";
+        CMAKE_PREFIX_PATH = pkgs.lib.concatStringsSep ":" [
+                  "${pkgs.sdl3.dev}"
+                  "${pkgs.glm}"
+                ];
       };
     };
 }
