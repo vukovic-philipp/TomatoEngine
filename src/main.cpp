@@ -27,11 +27,11 @@ namespace tomato::renderer {
 
     int main(int, char **)
     {
-        gpu::GPU gpu;
+        gpu::GPU gpu {};
         if (!gpu_init(&gpu, "Cube", 1280, 720)) { gpu_shutdown(&gpu); return 1; }
 
         SDL_GPUGraphicsPipeline *pipeline = pipelines::create_cube_pipeline(&gpu);
-        mesh::Mesh cube;
+        mesh::Mesh cube {};
         if (!pipeline || !mesh_create(&cube, &gpu, cube_vertices, 8, cube_indices, 36)) {
             gpu_shutdown(&gpu);
             return 1;
