@@ -7,4 +7,5 @@
 #include "gpu.hpp"
 
 namespace tomato::renderer {
+    int renderer();
 }
