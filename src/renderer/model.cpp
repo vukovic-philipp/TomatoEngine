@@ -81,6 +81,7 @@ namespace tomato::model {
 
                 const cgltf_accessor* pos = find_attr(prim, cgltf_attribute_type_position);
                 const cgltf_accessor* col = find_attr(prim, cgltf_attribute_type_color);
+                const cgltf_accessor* uvs = find_attr(prim, cgltf_attribute_type_texcoord);
 
                 glm::vec3 base(1.0f);
                 if (prim->material && prim->material->has_pbr_metallic_roughness) {
@@ -100,9 +101,17 @@ namespace tomato::model {
                         color = glm::vec3(c[0], c[1], c[3]);
                     }
 
+                    glm::vec2 uv(0.0f);
+                    if (uvs) {
+                        float t[2] = {};
+                        cgltf_accessor_read_float(uvs, v, t, 2);
+                        uv = glm::vec2(t[0], t[1]);
+                    }
+
                     pipelines::Vertex& dst = out->verts[out->vcount++];
                     dst.pos = glm::vec3(world * glm::vec4(pv[0], pv[1], pv[2], 1.0f));
                     dst.color = color;
+                    dst.uv = uv;
                 }
 
                 const size_t icount = primitive_index_count(prim);

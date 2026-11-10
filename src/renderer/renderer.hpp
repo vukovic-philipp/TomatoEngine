@@ -7,5 +7,5 @@
 #include "gpu.hpp"
 
 namespace tomato::renderer {
-    int renderer();
+    int renderer(const char* path);
 }

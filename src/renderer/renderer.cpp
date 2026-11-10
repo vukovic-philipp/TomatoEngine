@@ -6,53 +6,14 @@
 namespace tomato::renderer {
     static_assert(sizeof(pipelines::Vertex) == 32, "Vertex must be tightly packed");
 
-    struct Face { glm::vec3 o, u, v; };
-    static const Face faces[6] = {
-        {{-.5f,-.5f, .5f}, { 1,0,0}, {0,1,0}},   // +Z
-        {{ .5f,-.5f,-.5f}, {-1,0,0}, {0,1,0}},   // -Z
-        {{ .5f,-.5f, .5f}, {0,0,-1}, {0,1,0}},   // +X
-        {{-.5f,-.5f,-.5f}, {0,0, 1}, {0,1,0}},   // -X
-        {{-.5f, .5f, .5f}, { 1,0,0}, {0,0,-1}},  // +Y
-        {{-.5f,-.5f,-.5f}, { 1,0,0}, {0,0, 1}},  // -Y
-    };
-
-    static void build_cube(pipelines::Vertex out_v[24], uint32_t out_i[36]) {
-        const glm::vec3 white(1.0f);
-        for (int f = 0; f < 6; ++f) {
-            const Face& fc = faces[f];
-            pipelines::Vertex* v = out_v + f * 4;
-            v[0] = { fc.o,                 white, {0, 1} };
-            v[1] = { fc.o + fc.u,          white, {1, 1} };
-            v[2] = { fc.o + fc.u + fc.v,   white, {1, 0} };
-            v[3] = { fc.o + fc.v,          white, {0, 0} };
-            uint32_t b = f * 4;
-            uint32_t* i = out_i + f * 6;
-            i[0] = b; i[1] = b+1; i[2] = b+2;
-            i[3] = b; i[4] = b+2; i[5] = b+3;
-        }
-    }
-
-
-    int renderer() {
+    int renderer(const char* path) {
         gpu::GPU gpu {};
         if (!gpu_init(&gpu, "Cube", 1280, 720)) { gpu_shutdown(&gpu); return 1; }
 
         SDL_GPUGraphicsPipeline *pipeline = pipelines::create_cube_pipeline(&gpu);
-        /*pipelines::Vertex verts[24]; uint32_t idx[36];
-        build_cube(verts, idx);
-
-        mesh::Mesh cube {};
-        texture::Texture tex {};
-        if (!pipeline
-            || !mesh_create(&cube, &gpu, verts, 24, idx, 36)
-            || !texture_load(&tex, &gpu, "assets/LordKorea.png")) {
-            if (tex.tex) texture::texture_destroy(&tex, &gpu);
-            if (!pipeline) gpu::gpu_shutdown(&gpu);
-            return 1;
-        }*/
 
         model::MeshData md {};
-        if (!model::model_load(&md, "assets/BoxTextured.glb")) {
+        if (!model::model_load(&md, path)) {
             gpu::gpu_shutdown(&gpu);
             return 1;
         }
