@@ -1,5 +1,6 @@
 #include "renderer.hpp"
 #include "mesh.hpp"
+#include "model.hpp"
 #include "texture.hpp"
 
 namespace tomato::renderer {
@@ -37,18 +38,39 @@ namespace tomato::renderer {
         if (!gpu_init(&gpu, "Cube", 1280, 720)) { gpu_shutdown(&gpu); return 1; }
 
         SDL_GPUGraphicsPipeline *pipeline = pipelines::create_cube_pipeline(&gpu);
-        pipelines::Vertex verts[24]; uint32_t idx[36];
+        /*pipelines::Vertex verts[24]; uint32_t idx[36];
         build_cube(verts, idx);
 
         mesh::Mesh cube {};
         texture::Texture tex {};
         if (!pipeline
             || !mesh_create(&cube, &gpu, verts, 24, idx, 36)
-            || !texture_load(&tex, &gpu, "assets/cpp-red.png")) {
+            || !texture_load(&tex, &gpu, "assets/LordKorea.png")) {
             if (tex.tex) texture::texture_destroy(&tex, &gpu);
             if (!pipeline) gpu::gpu_shutdown(&gpu);
             return 1;
+        }*/
+
+        model::MeshData md {};
+        if (!model::model_load(&md, "assets/BoxTextured.glb")) {
+            gpu::gpu_shutdown(&gpu);
+            return 1;
         }
+        mesh::Mesh cube {};
+        texture::Texture tex {};
+        bool ok = mesh_create(&cube, &gpu, md.verts, md.vcount, md.idx, md.icount);
+        model::model_free(&md);
+
+        if (!pipeline
+            || !ok
+            || !texture_load(&tex, &gpu, "assets/LordKorea.png")) {
+            if (tex.tex) texture::texture_destroy(&tex, &gpu);
+            if (!pipeline) gpu::gpu_shutdown(&gpu);
+            gpu_shutdown(&gpu);
+            return 1;
+        }
+
+
         gpu::DepthTarget depth{};
 
         // Scene: struct-of-arrays. Entity i is index i across all arrays.

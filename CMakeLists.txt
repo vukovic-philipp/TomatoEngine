@@ -16,6 +16,8 @@ add_executable(
         src/renderer/pipelines.cpp
         src/main.cpp
         src/renderer/texture.cpp
+        src/renderer/model.cpp
+        src/renderer/model.hpp
 )
 
 target_link_libraries(TomatoEngine PRIVATE SDL3::SDL3)
