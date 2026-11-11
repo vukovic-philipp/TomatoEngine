@@ -1,9 +1,8 @@
 #include "model.hpp"
-
-#define CGLTF_IMPLEMENTATION
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#define CGLTF_IMPLEMENTATION
 #include "third_party/cgltf.h"
 
 namespace tomato::model {

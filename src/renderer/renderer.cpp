@@ -8,7 +8,7 @@ namespace tomato::renderer {
 
     int renderer(const char* path) {
         gpu::GPU gpu {};
-        if (!gpu_init(&gpu, "Cube", 1280, 720)) { gpu_shutdown(&gpu); return 1; }
+        if (!gpu_init(&gpu, "TomatoEngine v0.1.0", 1280, 720)) { gpu_shutdown(&gpu); return 1; }
 
         SDL_GPUGraphicsPipeline *pipeline = pipelines::create_cube_pipeline(&gpu);
 
@@ -36,15 +36,26 @@ namespace tomato::renderer {
 
         // Scene: struct-of-arrays. Entity i is index i across all arrays.
         constexpr int N = 5;
-        const glm::vec3 positions[N]  = { {-4,0,0}, {-2,0,0}, {0,0,0}, {2,0,0}, {4,0,0} };
+        glm::vec3 positions[N]  = { {-4,0,0}, {-2,0,0}, {0,0,0}, {2,0,0}, {4,0,0} };
         const float     spin_speed[N] = { 0.2f, 0.5f, 1.0f, 1.5f, 2.5f };
         const glm::vec3 spin_axis(0.5f, 1.0f, 0.0f);
 
         bool running = true;
         while (running) {
             SDL_Event e;
-            while (SDL_PollEvent(&e))
+            while (SDL_PollEvent(&e)) {
                 if (e.type == SDL_EVENT_QUIT) running = false;
+                if (e.type == SDL_EVENT_KEY_DOWN) {
+                    switch (e.key.key) {
+                        case(SDLK_D): positions[2].x += 0.1f; break;
+                        case(SDLK_A): positions[2].x -= 0.1f; break;
+                        case(SDLK_W): positions[2].y += 0.1f; break;
+                        case(SDLK_S): positions[2].y -= 0.1f; break;
+                        case(SDLK_E): positions[2].z += 0.1f; break;
+                        case(SDLK_Q): positions[2].z -= 0.1f; break;
+                    }
+                }
+            }
 
             gpu::Frame f = frame_begin(&gpu);
             if (f.color && depth_ensure(&depth, &gpu, f.w, f.h)) {
