@@ -130,7 +130,7 @@ namespace tomato::model {
                 }
                 if (flip) {
                     for (size_t i = 0; i + 2 < icount; i += 3) {
-                        uint32_t* tri = &out->idx[out->icount - icount + 1];
+                        uint32_t* tri = &out->idx[out->icount - icount + i];
                         uint32_t tmp = tri[1];
                         tri[1] = tri[2];
                         tri[2] = tmp;
