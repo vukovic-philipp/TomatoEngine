@@ -81,6 +81,8 @@ namespace tomato::model {
                 const cgltf_accessor* pos = find_attr(prim, cgltf_attribute_type_position);
                 const cgltf_accessor* col = find_attr(prim, cgltf_attribute_type_color);
                 const cgltf_accessor* uvs = find_attr(prim, cgltf_attribute_type_texcoord);
+                const cgltf_accessor* nrm = find_attr(prim, cgltf_attribute_type_normal);
+                const glm::mat3 nmat = glm::transpose(glm::inverse(glm::mat3(world)));
 
                 glm::vec3 base(1.0f);
                 if (prim->material && prim->material->has_pbr_metallic_roughness) {
@@ -97,7 +99,7 @@ namespace tomato::model {
                     if (col) {
                         float c[4] = {1, 1, 1, 1};
                         cgltf_accessor_read_float(col, v, c, 4);
-                        color = glm::vec3(c[0], c[1], c[3]);
+                        color = glm::vec3(c[0], c[1], c[2]);
                     }
 
                     glm::vec2 uv(0.0f);
@@ -107,8 +109,16 @@ namespace tomato::model {
                         uv = glm::vec2(t[0], t[1]);
                     }
 
+                    glm::vec3 n(0,1,0);
+                    if (nrm) {
+                        float nv[3] = {};
+                        cgltf_accessor_read_float(nrm, v, nv, 3);
+                        n = glm::normalize(nmat * glm::vec3(nv[0], nv[1], nv[2]));
+                    }
+
                     pipelines::Vertex& dst = out->verts[out->vcount++];
                     dst.pos = glm::vec3(world * glm::vec4(pv[0], pv[1], pv[2], 1.0f));
+                    dst.normal = n;
                     dst.color = color;
                     dst.uv = uv;
                 }

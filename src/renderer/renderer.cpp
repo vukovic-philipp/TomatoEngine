@@ -1,10 +1,13 @@
 #include "renderer.hpp"
+
+#include <glm/ext/quaternion_common.hpp>
+
 #include "mesh.hpp"
 #include "model.hpp"
 #include "texture.hpp"
 
 namespace tomato::renderer {
-    static_assert(sizeof(pipelines::Vertex) == 32, "Vertex must be tightly packed");
+    static_assert(sizeof(pipelines::Vertex) == 44, "Vertex must be tightly packed");
 
     int renderer(const char* path) {
         gpu::GPU gpu {};
@@ -62,6 +65,15 @@ namespace tomato::renderer {
                 const float t      = SDL_GetTicks() / 1000.0f;
                 const float aspect = static_cast<float>(f.w) / static_cast<float>(f.h);
 
+                const glm::vec3 eye(0, 2, 8);
+                LightUBO light {
+                  glm::vec4(glm::normalize(glm::vec3(0.5f, 1.0f, 0.7f)), 0),
+                    glm::vec4(1.0f, 0.95f, 0.9f, 0),
+                    glm::vec4(0.08f, 0.08f, 0.1f, 0),
+                    glm::vec4(eye, 1)
+                };
+                SDL_PushGPUFragmentUniformData(f.cmd, 0, &light, sizeof(light));
+
                 const glm::mat4 view = glm::lookAt(glm::vec3(0, 2, 8), glm::vec3(0),
                                                    glm::vec3(0, 1, 0));
                 const glm::mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 100.0f);
@@ -75,8 +87,11 @@ namespace tomato::renderer {
                 for (int i = 0; i < N; ++i) {
                     glm::mat4 model = glm::translate(glm::mat4(1.0f), positions[i])
                                     * glm::rotate(glm::mat4(1.0f), t * spin_speed[i], spin_axis);
-                    glm::mat4 mvp = vp * model;
-                    SDL_PushGPUVertexUniformData(f.cmd, 0, &mvp, sizeof(mvp));
+                    ObjectUBO obj;
+                    obj.model = model;
+                    obj.mvp = vp * model;
+                    obj.normal_mat = glm::mat4(glm::transpose(glm::inverse(glm::mat3(model))));
+                    SDL_PushGPUVertexUniformData(f.cmd, 0, &obj, sizeof(obj));
                     mesh_draw(pass, &cube);
                 }
 
