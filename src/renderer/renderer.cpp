@@ -70,8 +70,11 @@ namespace tomato::renderer {
 
                 texture::texture_bind(pass, &rm->tex, 0);
 
+                glm::mat4 rot = glm::rotate(glm::mat4(1.0f), renderable->rotation.y, glm::vec3(0, 1, 0));
+                rot = glm::rotate(rot, renderable->rotation.x, glm::vec3(1, 0, 0));
+                rot = glm::rotate(rot, renderable->rotation.z, glm::vec3(0, 0, 1));
                 const glm::mat4 model = glm::translate(glm::mat4(1.0f), renderable->position)
-                                       * glm::mat4_cast(renderable->rotation);
+                                       * rot;
                 ObjectUBO obj;
                 obj.model = model;
                 obj.mvp = vp * model;

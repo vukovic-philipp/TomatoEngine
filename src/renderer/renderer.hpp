@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include <SDL3/SDL.h>
 #define SDL_MAIN_HANDLED
+#include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
 #include <glm/glm.hpp>
@@ -24,7 +24,7 @@ namespace tomato::renderer {
     struct Renderable {
         RegisteredModel* model;
         glm::vec3 position{0.0f};
-        glm::quat rotation{1.0f, 0.0f, 0.0f, 0.0f};
+        glm::vec3 rotation{0.0f};
     };
 
     struct Renderer {
