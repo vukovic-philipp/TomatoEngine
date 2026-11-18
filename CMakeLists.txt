@@ -181,9 +181,8 @@ add_executable(
         src/main.cpp
         src/renderer/texture.cpp
         src/renderer/model.cpp
-        src/renderer/model.hpp
         src/gameplay/physics.cpp
-        src/gameplay/physics.hpp
+        src/gameplay/player.cpp
 )
 
 if (EMSCRIPTEN)

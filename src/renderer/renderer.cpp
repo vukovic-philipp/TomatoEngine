@@ -1,4 +1,5 @@
 #include "renderer.hpp"
+#include <cmath>
 
 namespace tomato::renderer {
     static_assert(sizeof(pipelines::Vertex) == 44, "Vertex must be tightly packed");
@@ -41,12 +42,23 @@ namespace tomato::renderer {
         r->renderables.push_back(renderable);
     }
 
+    void renderer_set_camera(Renderer* r, glm::vec3 pos, float yaw, float pitch) {
+        r->cam_pos = pos;
+        r->cam_yaw = yaw;
+        r->cam_pitch = pitch;
+    }
+
     void renderer_frame_tick(Renderer* r) {
         gpu::Frame f = gpu::frame_begin(&r->gpu);
         if (f.color && depth_ensure(&r->depth, &r->gpu, f.w, f.h)) {
             const float aspect = static_cast<float>(f.w) / static_cast<float>(f.h);
 
-            const glm::vec3 eye(0, 2, 8);
+            const glm::vec3 eye = r->cam_pos;
+            const glm::vec3 forward(
+                cosf(r->cam_pitch) * sinf(r->cam_yaw),
+                sinf(r->cam_pitch),
+                -cosf(r->cam_pitch) * cosf(r->cam_yaw)
+            );
             LightUBO light {
                 glm::vec4(glm::normalize(glm::vec3(0.5f, 1.0f, 0.7f)), 0),
                   glm::vec4(1.0f, 0.95f, 0.9f, 0),
@@ -55,7 +67,7 @@ namespace tomato::renderer {
               };
             SDL_PushGPUFragmentUniformData(f.cmd, 0, &light, sizeof(light));
 
-            const glm::mat4 view = glm::lookAt(eye, glm::vec3(0),
+            const glm::mat4 view = glm::lookAt(eye, eye + forward,
                                                glm::vec3(0, 1, 0));
             const glm::mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 100.0f);
             const glm::mat4 vp   = proj * view;   // same for every object this frame

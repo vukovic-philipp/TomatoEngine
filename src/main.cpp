@@ -1,4 +1,5 @@
 #include "gameplay/physics.hpp"
+#include "gameplay/player.hpp"
 #include "renderer/renderer.hpp"
 
 int main(int argc, char* argv[]) {
@@ -11,9 +12,12 @@ int main(int argc, char* argv[]) {
     tomato::renderer::Renderable box { &cube, glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, 0.0f) };
     tomato::renderer::Renderable fallingBox { &cube, glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f) };
     tomato::renderer::Renderable XiDuck {&duck, glm::vec3( -2, 0, 4), glm::vec3(0.0f, 0.0f, 0.0f)};
+
     tomato::renderer::renderer_add_renderable(&r, &box);
     tomato::renderer::renderer_add_renderable(&r, &fallingBox);
     tomato::renderer::renderer_add_renderable(&r, &XiDuck);
+
+    SDL_SetWindowRelativeMouseMode(r.gpu.window, true);
 
     tomato::physics::World pw {};
     tomato::physics::WorldConfig wc {};
@@ -25,9 +29,14 @@ int main(int argc, char* argv[]) {
     uint32_t falling_body = tomato::physics::body_create_box(&pw, fallingBox.position, half_extents, tomato::physics::BodyType::Dynamic);
     uint32_t static_body = tomato::physics::body_create_box(&pw, glm::vec3(0.0f, -15.0f, 0.0f), glm::vec3(12.5f), tomato::physics::Static);
 
-    const float dt = 1.0f / 50.0f;
-    const float move_speed = 3.0f;
+    tomato::player::Player player {};
+    tomato::player::player_create(&player, &pw, glm::vec3(0.0f, 1.0f, -5.0f));
+
+    constexpr float MOUSE_SENSITIVITY = 0.0025f;
+    constexpr float PITCH_LIMIT = glm::radians(89.0f);
     float acc = 0; uint64_t last = SDL_GetTicksNS();
+
+    int fps_frames = 0; float fps_timer = 0.0f;
 
     bool running = true;
     while (running) {
@@ -40,31 +49,52 @@ int main(int argc, char* argv[]) {
                     case SDLK_P: XiDuck.rotation.y -= 0.1f; break;
                 }
             }
+            if (e.type == SDL_EVENT_MOUSE_MOTION) {
+                player.yaw += e.motion.xrel * MOUSE_SENSITIVITY;
+                player.pitch = glm::clamp(player.pitch - e.motion.yrel * MOUSE_SENSITIVITY,
+                                          -PITCH_LIMIT, PITCH_LIMIT);
+            }
         }
 
         const bool* keys = SDL_GetKeyboardState(nullptr);
-        glm::vec3 vel(0.0f);
-        bool moving = false;
-        if (keys[SDL_SCANCODE_D]) { vel.x += move_speed; moving = true; }
-        if (keys[SDL_SCANCODE_A]) { vel.x -= move_speed; moving = true; }
-        if (keys[SDL_SCANCODE_W]) { vel.y += move_speed; moving = true; }
-        if (keys[SDL_SCANCODE_S]) { vel.y -= move_speed; moving = true; }
-        if (keys[SDL_SCANCODE_E]) { vel.z += move_speed; moving = true; }
-        if (keys[SDL_SCANCODE_Q]) { vel.z -= move_speed; moving = true; }
-        if (moving) tomato::physics::body_set_velocity(&pw, box_body, vel);
+
+        tomato::player::PlayerCmd cmd {};
+        if (keys[SDL_SCANCODE_D]) cmd.move.x += 1.0f;
+        if (keys[SDL_SCANCODE_A]) cmd.move.x -= 1.0f;
+        if (keys[SDL_SCANCODE_W]) cmd.move.y += 1.0f;
+        if (keys[SDL_SCANCODE_S]) cmd.move.y -= 1.0f;
+        cmd.jump = keys[SDL_SCANCODE_SPACE];
 
         uint64_t now = SDL_GetTicksNS();
-        acc += (now - last) * 1e-9f; last = now;
+        float frame_dt = (now - last) * 1e-9f; last = now;
+
+        acc += frame_dt;
         if (acc > 0.25f) acc = 0.25f;                 // avoids the spiral of death after a stall
-        while (acc >= dt) { tomato::physics::world_step(&pw, dt); acc -= dt; }
+        while (acc >= tomato::physics::DPTS) {
+            tomato::player::player_tick(&player, &pw, cmd, tomato::physics::DPTS);
+            tomato::physics::world_step(&pw, tomato::physics::DPTS);
+            acc -= tomato::physics::DPTS;
+        }
+
+        tomato::renderer::renderer_set_camera(&r, tomato::player::player_eye(&player, 1.0f),
+                                              player.yaw, player.pitch);
 
         glm::quat box_rot, falling_rot;
         tomato::physics::body_get_transform(&pw, box_body, &box.position, &box_rot);
         box.rotation = glm::eulerAngles(box_rot);
+
         tomato::physics::body_get_transform(&pw, falling_body, &fallingBox.position, &falling_rot);
         fallingBox.rotation = glm::eulerAngles(falling_rot);
 
         tomato::renderer::renderer_frame_tick(&r);
+
+        fps_frames++;
+        fps_timer += frame_dt;
+        if (fps_timer >= 1.0f) {
+            SDL_Log("FPS: %d", fps_frames);
+            fps_frames = 0;
+            fps_timer = 0.0f;
+        }
     }
 
     tomato::physics::world_destroy(&pw);

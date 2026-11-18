@@ -33,6 +33,9 @@ namespace tomato::renderer {
         gpu::DepthTarget depth;
         std::vector<RegisteredModel*> Models;
         std::vector<Renderable*> renderables;
+        glm::vec3 cam_pos{0.0f};
+        float cam_yaw = 0.0f;
+        float cam_pitch = 0.0f;
     };
 
     struct ObjectUBO {
@@ -51,5 +54,6 @@ namespace tomato::renderer {
     bool renderer_create(Renderer* r, const char* name);
     bool renderer_register_model(Renderer* r, RegisteredModel* m, const char* model_path, const char* tex_path = "assets/LordKorea.png");
     void renderer_add_renderable(Renderer* r, Renderable* renderable);
+    void renderer_set_camera(Renderer* r, glm::vec3 pos, float yaw, float pitch);
     void renderer_frame_tick(Renderer* r);
 }
